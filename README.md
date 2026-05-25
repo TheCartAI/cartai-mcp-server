@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="images/download.svg" alt="CartAI" height="50" />
+  <img src="images/cartai-logo.png" alt="CartAI" height="50" />
 </p>
 
 # CartAI MCP Server
