@@ -1,14 +1,18 @@
+<p align="center">
+  <img src="images/download.svg" alt="CartAI" height="50" />
+</p>
+
 # CartAI MCP Server
 
-> **Let Claude buy things on the internet — powered by [CartAI](https://cartai.ai).**
+> **<a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI</a> Powered MCP Server to execute autonomous checkouts.**
 >
-> **[Sign up and try it on the CartAI Portal →](https://portal.cartai.ai/)**
+> **<a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">Sign up and try it on the CartAI Portal →</a>**
 
-An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that exposes the CartAI Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Point Claude at a product URL, give it your shipping and payment details, and it handles the entire checkout — asynchronously, with full status tracking.
+An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP (Model Context Protocol)</a> server that exposes the CartAI Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Point Claude at a product URL, give it your shipping and payment details, and it handles the entire checkout — asynchronously, with full status tracking.
 
-[![Node.js ≥ 18](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org)
-[![MCP Compatible](https://img.shields.io/badge/MCP-compatible-blue)](https://modelcontextprotocol.io)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+<a href="https://nodejs.org" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen" alt="Node.js ≥ 18"/></a>
+<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/MCP-compatible-blue" alt="MCP Compatible"/></a>
+<a href="LICENSE" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License: Apache 2.0"/></a>
 
 ---
 
@@ -34,7 +38,7 @@ An [MCP (Model Context Protocol)](https://modelcontextprotocol.io) server that e
 
 ## What is MCP?
 
-[Model Context Protocol](https://modelcontextprotocol.io) is an open standard that lets AI assistants call external tools — APIs, databases, file systems — through a common interface. Think of it like a USB-C port for AI: one standard, any device. This server plugs CartAI's checkout capability into that port.
+<a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">Model Context Protocol</a> is an open standard that lets AI assistants call external tools — APIs, databases, file systems — through a common interface. Think of it like a USB-C port for AI: one standard, any device. This server plugs CartAI's checkout capability into that port.
 
 ---
 
@@ -56,7 +60,7 @@ Under the hood every tool maps 1-to-1 to a CartAI REST endpoint — the MCP serv
 | Requirement | Version / Notes |
 |-------------|-----------------|
 | **Node.js** | `>= 18.0.0` (uses native `fetch` and ES modules) |
-| **CartAI API key** | Obtain from the [CartAI Admin Portal](https://cartai.ai) — see [API Docs](https://docs.cartai.ai/) for full reference |
+| **CartAI API key** | Obtain from the <a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI Admin Portal</a> — see <a href="https://docs.cartai.ai/" target="_blank" rel="noopener noreferrer">API Docs</a> for full reference |
 | **MCP host** | Claude Desktop, VS Code (with MCP extension), or MCP Inspector |
 
 ---
@@ -132,7 +136,7 @@ Reload the VS Code window — the CartAI tools will be available to any MCP-awar
 
 ### MCP Inspector
 
-[MCP Inspector](https://github.com/modelcontextprotocol/inspector) is the official browser-based tool for testing and debugging MCP servers without needing a full AI client.
+<a href="https://github.com/modelcontextprotocol/inspector" target="_blank" rel="noopener noreferrer">MCP Inspector</a> is the official browser-based tool for testing and debugging MCP servers without needing a full AI client.
 
 ```bash
 # Run Inspector against this server in one command
@@ -307,7 +311,13 @@ This package uses native `fetch` and ES modules — Node.js 18 or newer is requi
 
 ## Resources & Support
 
-- **API Docs:** [docs.cartai.ai](https://docs.cartai.ai/)
-- **Website:** [cartai.ai](https://cartai.ai)
-- **Email:** [arb@cartai.ai](mailto:arb@cartai.ai)
-- **Portal:** [Sign up, explore, and manage your account](https://portal.cartai.ai/)
+- **API Docs:** <a href="https://docs.cartai.ai/" target="_blank" rel="noopener noreferrer">docs.cartai.ai</a>
+- **Website:** <a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">cartai.ai</a>
+- **Email:** <a href="mailto:arb@cartai.ai">arb@cartai.ai</a>
+- **Portal:** <a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">Sign up, explore, and manage your account</a>
+
+---
+
+## License
+
+Licensed under the <a href="LICENSE" target="_blank" rel="noopener noreferrer">Apache License 2.0</a>.
