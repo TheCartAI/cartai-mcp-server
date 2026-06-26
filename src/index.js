@@ -6,10 +6,13 @@
  *
  *  Tool                 Method  URL
  *  ─────────────────────────────────────────────────────────────────────
- *  create_checkout      POST    https://api.cartai.ai/checkout
- *  get_checkout         GET     https://api.cartai.ai/checkout/{taskId}
- *  cancel_checkout      POST    https://api.cartai.ai/checkout/cancel
- *  get_status_history   GET     https://api.cartai.ai/status-history/{taskId}
+ *  create_checkout        POST    https://api.cartai.ai/checkout
+ *  get_checkout           GET     https://api.cartai.ai/checkout/{taskId}
+ *  cancel_checkout        DELETE  https://api.cartai.ai/checkout/{taskId}
+ *  get_status_history     GET     https://api.cartai.ai/checkout/{taskId}/status-history
+ *  search_products        POST    https://api.cartai.ai/product/search
+ *  get_product_details    POST    https://api.cartai.ai/product/details
+ *  get_checkout_estimates POST    https://api.cartai.ai/checkout-estimates
  *
  * Auth: x-api-key header — set CARTAI_API_KEY env var before starting.
  *
@@ -248,31 +251,27 @@ const TOOLS = [
   },
 
   // 3. CANCEL CHECKOUT TASK
-  // POST https://api.cartai.ai/checkout/cancel
+  // DELETE https://api.cartai.ai/checkout/{taskId}
   {
     name: "cancel_checkout",
     description:
       "Cancels an in-progress CartAI checkout task. " +
       "Stops all ongoing checkout processes and prevents further execution. " +
-      "Requires both taskId and executionId.",
+      "Requires only the taskId.",
     inputSchema: {
       type: "object",
-      required: ["taskId", "executionId"],
+      required: ["taskId"],
       properties: {
         taskId: {
           type: "string",
           description: "The ID of the checkout task to cancel"
-        },
-        executionId: {
-          type: "string",
-          description: "The execution ID of the checkout task"
         }
       }
     }
   },
 
   // 4. GET STATUS HISTORY
-  // GET https://api.cartai.ai/status-history/{taskId}
+  // GET https://api.cartai.ai/checkout/{taskId}/status-history
   {
     name: "get_status_history",
     description:
@@ -287,6 +286,113 @@ const TOOLS = [
         taskId: {
           type: "string",
           description: "The ID of the checkout task"
+        }
+      }
+    }
+  },
+
+  // 5. SEARCH PRODUCTS
+  // POST https://api.cartai.ai/product/search
+  {
+    name: "search_products",
+    description:
+      "Searches for products by name across merchants. " +
+      "Returns ranked results with pricing, images, and purchase links. " +
+      "Optionally narrow results to a specific merchant while still returning others.",
+    inputSchema: {
+      type: "object",
+      required: ["name"],
+      properties: {
+        name: {
+          type: "string",
+          description: "Product name or search query"
+        },
+        merchant: {
+          type: "string",
+          description: "Optional merchant name to prioritize results (e.g. 'amazon', 'walmart')"
+        }
+      }
+    }
+  },
+
+  // 6. GET PRODUCT DETAILS
+  // POST https://api.cartai.ai/product/details
+  {
+    name: "get_product_details",
+    description:
+      "Retrieves detailed product information for a given product page URL. " +
+      "Returns metadata, available variants, pricing, availability, and images.",
+    inputSchema: {
+      type: "object",
+      required: ["url"],
+      properties: {
+        url: {
+          type: "string",
+          format: "uri",
+          description: "Full product page URL to fetch details for"
+        },
+        allVariants: {
+          type: "boolean",
+          description: "When true, returns all available variants. Defaults to true."
+        }
+      }
+    }
+  },
+
+  // 7. GET CHECKOUT ESTIMATES
+  // POST https://api.cartai.ai/checkout-estimates
+  {
+    name: "get_checkout_estimates",
+    description:
+      "Computes a pre-checkout cost estimate for a given merchant, destination, and list of items. " +
+      "Returns subtotal, shipping cost, tax, and total amounts before placing an order.",
+    inputSchema: {
+      type: "object",
+      required: ["merchant", "destination", "items"],
+      properties: {
+        merchant: {
+          type: "string",
+          description: "Name of the merchant to estimate costs for (e.g. 'amazon')"
+        },
+        destination: {
+          type: "object",
+          description: "Delivery destination for shipping and tax calculation",
+          properties: {
+            addressLine1: { type: "string" },
+            addressLine2: { type: "string" },
+            city:         { type: "string" },
+            province:     { type: "string", description: "State/province code e.g. NY" },
+            postalCode:   { type: "string", description: "ZIP or postal code" },
+            country:      { type: "string", description: "Country code e.g. US" }
+          }
+        },
+        items: {
+          type: "array",
+          description: "List of items to estimate costs for",
+          items: {
+            type: "object",
+            required: ["url", "quantity"],
+            properties: {
+              url: {
+                type: "string",
+                format: "uri",
+                description: "Full product page URL"
+              },
+              quantity: {
+                type: "integer",
+                minimum: 1,
+                description: "Number of units"
+              },
+              selectedVariant: {
+                type: "object",
+                description: "Specific variant (color, size, etc.)",
+                properties: {
+                  color: { type: "string" },
+                  size:  { type: "string" }
+                }
+              }
+            }
+          }
         }
       }
     }
@@ -360,9 +466,9 @@ async function handleGetCheckout(args) {
 }
 
 async function handleCancelCheckout(args) {
-  const { taskId, executionId } = args;
-  const url = `${BASE_URL}/checkout/cancel`;
-  const result = await cartaiRequest("POST", url, { taskId, executionId });
+  const { taskId } = args;
+  const url = `${BASE_URL}/checkout/${encodeURIComponent(taskId)}`;
+  const result = await cartaiRequest("DELETE", url);
 
   if (!result.ok) {
     return errorResult(
@@ -376,8 +482,7 @@ async function handleCancelCheckout(args) {
       type: "text",
       text: [
         `Checkout task cancelled`,
-        `taskId:      ${taskId}`,
-        `executionId: ${executionId}`,
+        `taskId: ${taskId}`,
         ``,
         `Full response:`,
         JSON.stringify(result.data, null, 2)
@@ -388,7 +493,7 @@ async function handleCancelCheckout(args) {
 
 async function handleGetStatusHistory(args) {
   const { taskId } = args;
-  const url = `${BASE_URL}/status-history/${encodeURIComponent(taskId)}`;
+  const url = `${BASE_URL}/checkout/${encodeURIComponent(taskId)}/status-history`;
   const result = await cartaiRequest("GET", url);
 
   if (!result.ok) {
@@ -426,6 +531,96 @@ async function handleGetStatusHistory(args) {
   };
 }
 
+async function handleSearchProducts(args) {
+  const { name, merchant } = args;
+  const payload = { name };
+  if (merchant !== undefined) payload.merchant = merchant;
+
+  const url = `${BASE_URL}/product/search`;
+  const result = await cartaiRequest("POST", url, payload);
+
+  if (!result.ok) {
+    return errorResult(
+      `search_products failed — HTTP ${result.status}`,
+      result.data
+    );
+  }
+
+  return {
+    content: [{
+      type: "text",
+      text: [
+        `Search results for: "${name}"`,
+        merchant ? `Merchant filter: ${merchant}` : "",
+        ``,
+        `Full response:`,
+        JSON.stringify(result.data, null, 2)
+      ].filter(l => l !== "").join("\n")
+    }]
+  };
+}
+
+async function handleGetProductDetails(args) {
+  const { url: productUrl, allVariants } = args;
+  const payload = { url: productUrl };
+  if (allVariants !== undefined) payload.allVariants = allVariants;
+
+  const url = `${BASE_URL}/product/details`;
+  const result = await cartaiRequest("POST", url, payload);
+
+  if (!result.ok) {
+    return errorResult(
+      `get_product_details failed — HTTP ${result.status}`,
+      result.data
+    );
+  }
+
+  return {
+    content: [{
+      type: "text",
+      text: [
+        `Product Details`,
+        `URL: ${productUrl}`,
+        ``,
+        `Full response:`,
+        JSON.stringify(result.data, null, 2)
+      ].join("\n")
+    }]
+  };
+}
+
+async function handleGetCheckoutEstimates(args) {
+  const { merchant, destination, items } = args;
+
+  const url = `${BASE_URL}/checkout-estimates`;
+  const result = await cartaiRequest("POST", url, { merchant, destination, items });
+
+  if (!result.ok) {
+    return errorResult(
+      `get_checkout_estimates failed — HTTP ${result.status}`,
+      result.data
+    );
+  }
+
+  const d = result.data;
+  return {
+    content: [{
+      type: "text",
+      text: [
+        `Checkout Estimate for: ${merchant}`,
+        ``,
+        `Subtotal: ${d.subtotal ?? "—"}`,
+        `Shipping: ${d.shipping ?? "—"}`,
+        `Tax:      ${d.tax ?? "—"}`,
+        `Total:    ${d.total ?? "—"}`,
+        ``,
+        `Full response:`,
+        JSON.stringify(d, null, 2)
+      ].join("\n")
+    }]
+  };
+}
+
 // ─── Util ─────────────────────────────────────────────────────────────────────
 
 function errorResult(message, data) {
@@ -441,10 +636,13 @@ function errorResult(message, data) {
 // ─── Dispatch ────────────────────────────────────────────────────────────────
 
 const HANDLERS = {
-  create_checkout:    handleCreateCheckout,
-  get_checkout:       handleGetCheckout,
-  cancel_checkout:    handleCancelCheckout,
-  get_status_history: handleGetStatusHistory,
+  create_checkout:        handleCreateCheckout,
+  get_checkout:           handleGetCheckout,
+  cancel_checkout:        handleCancelCheckout,
+  get_status_history:     handleGetStatusHistory,
+  search_products:        handleSearchProducts,
+  get_product_details:    handleGetProductDetails,
+  get_checkout_estimates: handleGetCheckoutEstimates,
 };
 
 // ─── Server ──────────────────────────────────────────────────────────────────

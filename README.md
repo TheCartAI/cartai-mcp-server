@@ -50,6 +50,9 @@ An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noref
 | `get_checkout` | Fetch the current state of a checkout task |
 | `cancel_checkout` | Cancel an in-progress checkout |
 | `get_status_history` | Get the full lifecycle event log for a task |
+| `search_products` | Search for products by name across merchants |
+| `get_product_details` | Retrieve detailed info, variants, and pricing for a product URL |
+| `get_checkout_estimates` | Compute pre-checkout shipping and tax estimates before placing an order |
 
 Under the hood every tool maps 1-to-1 to a CartAI REST endpoint — the MCP server is a thin, type-safe bridge with no additional logic.
 
@@ -213,9 +216,9 @@ Retrieves the current state of a checkout task.
 
 ### `cancel_checkout`
 
-Cancels an in-progress checkout task. Both fields are required.
+Cancels an in-progress checkout task.
 
-**Required:** `taskId`, `executionId`
+**Required:** `taskId`
 
 **Returns:** Confirmation that the checkout task has been stopped and will not proceed further.
 
@@ -228,6 +231,77 @@ Returns the full lifecycle event log — all steps, timestamps, and credits cons
 **Required:** `taskId`
 
 **Returns:** Ordered list of lifecycle events with statuses, timestamps, and credits consumed per step.
+
+---
+
+### `search_products`
+
+Searches for products by name across merchants. Returns ranked results with pricing, images, and purchase links.
+
+**Required inputs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `name` | `string` | Product name or search query |
+
+**Optional inputs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `merchant` | `string` | Merchant name to prioritize results (e.g. `"amazon"`, `"walmart"`). Other retailers are still returned. |
+
+**Returns:** Ranked list of matching products with pricing, imagery, and purchase links.
+
+---
+
+### `get_product_details`
+
+Retrieves detailed product information for a given product page URL, including all available variants, pricing, and availability.
+
+**Required inputs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `url` | `string` (URI) | Full product page URL |
+
+**Optional inputs:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `allVariants` | `boolean` | `true` | When `true`, returns all available variants (color, size, etc.) |
+
+**Returns:** Product metadata, available dimensions, and per-variant details including pricing, availability, images, and attributes.
+
+---
+
+### `get_checkout_estimates`
+
+Computes a pre-checkout cost estimate for a given merchant, destination, and list of items — before placing an order.
+
+**Required inputs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `merchant` | `string` | Merchant name to estimate costs for (e.g. `"amazon"`) |
+| `destination` | `object` | Delivery destination for shipping and tax calculation |
+| `destination.city` | `string` | — |
+| `destination.province` | `string` | State/province code e.g. `NY` |
+| `destination.postalCode` | `string` | ZIP or postal code |
+| `destination.country` | `string` | Country code e.g. `US` |
+| `items` | `array` | List of items to estimate |
+| `items[].url` | `string` (URI) | Full product page URL |
+| `items[].quantity` | `integer` | Number of units (min 1) |
+
+**Optional inputs:**
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `destination.addressLine1` | `string` | Street address line 1 |
+| `destination.addressLine2` | `string` | Street address line 2 |
+| `items[].selectedVariant.color` | `string` | Variant color |
+| `items[].selectedVariant.size` | `string` | Variant size |
+
+**Returns:** Pre-checkout cost breakdown including subtotal, shipping cost, tax, and total amount.
 
 ---
 
