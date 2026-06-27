@@ -8,7 +8,7 @@
 >
 > **<a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">Sign up and try it on the CartAI Portal →</a>**
 
-An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP (Model Context Protocol)</a> server that exposes the CartAI Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Point Claude at a product URL, give it your shipping and payment details, and it handles the entire checkout — asynchronously, with full status tracking.
+An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP (Model Context Protocol)</a> server that exposes the CartAI Catalog and Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Search for products, fetch detailed variant and pricing info, get pre-checkout shipping and tax estimates — then hand off to CartAI to execute the entire checkout autonomously, asynchronously, with full status tracking.
 
 <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen" alt="Node.js ≥ 18"/></a>
 <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/MCP-compatible-blue" alt="MCP Compatible"/></a>
@@ -250,7 +250,7 @@ Searches for products by name across merchants. Returns ranked results with pric
 |-------|------|-------------|
 | `merchant` | `string` | Merchant name to prioritize results (e.g. `"amazon"`, `"walmart"`). Other retailers are still returned. |
 
-**Returns:** Ranked list of matching products with pricing, imagery, and purchase links.
+**Returns:** Ranked `products[]` each with `name`, `brand`, `merchant`, `image`, `priceFrom`, `currency`, and `directUrl` (use as `url` in `create_checkout` or `get_product_details`). Also returns `targetMerchant` and `targetMatchCount`.
 
 ---
 
@@ -270,7 +270,7 @@ Retrieves detailed product information for a given product page URL, including a
 |-------|------|---------|-------------|
 | `allVariants` | `boolean` | `true` | When `true`, returns all available variants (color, size, etc.) |
 
-**Returns:** Product metadata, available dimensions, and per-variant details including pricing, availability, images, and attributes.
+**Returns:** Product metadata (`name`, `brand`, `retailer`, `image`), `directUrl`, `commissionUrl`, variant `dimensions`, and a `variants[]` list with per-variant `price`, `available`, `attributes`, `url`, and `commissionUrl`.
 
 ---
 
@@ -301,7 +301,7 @@ Computes a pre-checkout cost estimate for a given merchant, destination, and lis
 | `items[].selectedVariant.color` | `string` | Variant color |
 | `items[].selectedVariant.size` | `string` | Variant size |
 
-**Returns:** Pre-checkout cost breakdown including subtotal, shipping cost, tax, and total amount.
+**Returns:** Full cost breakdown with `subtotal`, `shipping`, `shippingKnown`, `tax`, `total`, `currency`, and a per-item `items[]` breakdown — all in the resolved `destination` context.
 
 ---
 
@@ -331,7 +331,19 @@ Show me the full status history for task abc-123-def including how many credits 
 
 ## How it works
 
-You provide a product URL, customer details, and payment credentials. CartAI handles everything from there.
+CartAI exposes two sets of capabilities: **Catalog** (discover and evaluate products) and **Checkout** (autonomously place orders).
+
+### Catalog flow
+
+Use the catalog tools to find products and validate details before committing to a purchase:
+
+1. **`search_products`** — search by name across merchants to get a ranked list with pricing and `directUrl` for each result.
+2. **`get_product_details`** — pass a `directUrl` to retrieve all variants, stock availability, and per-variant pricing.
+3. **`get_checkout_estimates`** — compute shipping and tax for a destination before placing the order.
+
+### Checkout flow
+
+Once you have a product URL and customer details, hand off to CartAI:
 
 ```
 Your App                  CartAI Agent              Merchant Website
@@ -346,9 +358,10 @@ Your App                  CartAI Agent              Merchant Website
     |<— Webhook: COMPLETED ————|                          |
 ```
 
-1. **Call `POST /checkout`** — pass the product URL, customer shipping address, and payment provider credentials.
+1. **`create_checkout`** — pass the product URL, customer shipping address, and payment credentials.
 2. **Receive a `taskId` immediately** — the checkout runs asynchronously in the background.
 3. **The AI agent does the work** — navigating the merchant's live website, selecting the right variant, applying your shipping strategy, and placing the order.
+4. **Track progress** — use `get_checkout` or `get_status_history` to monitor the task; cancel anytime with `cancel_checkout`.
 
 ---
 

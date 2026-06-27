@@ -297,7 +297,8 @@ const TOOLS = [
     name: "search_products",
     description:
       "Searches for products by name across merchants. " +
-      "Returns ranked results with pricing, images, and purchase links. " +
+      "Returns ranked results each with name, brand, merchant, image, priceFrom, currency, and directUrl. " +
+      "Use directUrl as the url input for create_checkout or get_product_details. " +
       "Optionally narrow results to a specific merchant while still returning others.",
     inputSchema: {
       type: "object",
