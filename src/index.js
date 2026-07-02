@@ -322,7 +322,7 @@ const TOOLS = [
     name: "get_product_details",
     description:
       "Retrieves detailed product information for a given product page URL. " +
-      "Returns metadata, available variants, pricing, availability, and images.",
+      "Returns metadata, available variants, pricing, availability, images, and monetizationUrl per variant.",
     inputSchema: {
       type: "object",
       required: ["url"],

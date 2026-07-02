@@ -270,7 +270,7 @@ Retrieves detailed product information for a given product page URL, including a
 |-------|------|---------|-------------|
 | `allVariants` | `boolean` | `true` | When `true`, returns all available variants (color, size, etc.) |
 
-**Returns:** Product metadata (`name`, `brand`, `retailer`, `image`), `directUrl`, `commissionUrl`, variant `dimensions`, and a `variants[]` list with per-variant `price`, `available`, `attributes`, `url`, and `commissionUrl`.
+**Returns:** Product metadata (`name`, `brand`, `retailer`, `image`), `directUrl`, `monetizationUrl`, variant `dimensions`, and a `variants[]` list with per-variant `price`, `available`, `attributes`, `url`, and `monetizationUrl`.
 
 ---
 
