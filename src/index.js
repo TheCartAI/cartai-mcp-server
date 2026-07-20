@@ -2,17 +2,18 @@
 /**
  * CartAI MCP Server
  *
- * Implements 4 tools backed by the CartAI Checkout APIs:
+ * Implements 8 tools backed by the CartAI Checkout APIs:
  *
- *  Tool                 Method  URL
+ *  Tool                    Method  URL
  *  ─────────────────────────────────────────────────────────────────────
- *  create_checkout        POST    https://api.cartai.ai/checkout
- *  get_checkout           GET     https://api.cartai.ai/checkout/{taskId}
- *  cancel_checkout        DELETE  https://api.cartai.ai/checkout/{taskId}
- *  get_status_history     GET     https://api.cartai.ai/checkout/{taskId}/status-history
- *  search_products        POST    https://api.cartai.ai/product/search
- *  get_product_details    POST    https://api.cartai.ai/product/details
- *  get_checkout_estimates POST    https://api.cartai.ai/checkout-estimates
+ *  create_checkout         POST    https://api.cartai.ai/checkout
+ *  get_checkout            GET     https://api.cartai.ai/checkout/{taskId}
+ *  cancel_checkout         DELETE  https://api.cartai.ai/checkout/{taskId}
+ *  get_status_history      GET     https://api.cartai.ai/checkout/{taskId}/status-history
+ *  search_products         POST    https://api.cartai.ai/product/search
+ *  get_product_details     POST    https://api.cartai.ai/product/details
+ *  get_checkout_estimates  POST    https://api.cartai.ai/checkout-estimates
+ *  create_payment_session  POST    https://api.cartai.ai/payment/session
  *
  * Auth: x-api-key header — set CARTAI_API_KEY env var before starting.
  *
@@ -52,11 +53,12 @@ async function cartaiRequest(method, url, body = null) {
 
   const res = await fetch(url, init);
 
+  const raw = await res.text();
   let data;
   try {
-    data = await res.json();
+    data = JSON.parse(raw);
   } catch {
-    data = { raw: await res.text() };
+    data = { raw };
   }
 
   return { ok: res.ok, status: res.status, data };
@@ -74,7 +76,10 @@ const TOOLS = [
       "Creates a new CartAI checkout task. This is an async API — the checkout " +
       "executes in the background and emits status updates via webhooks. " +
       "Supports single-SKU, multi-SKU, and multi-merchant orders. " +
-      "Returns a taskId to track progress with get_checkout or get_status_history.",
+      "Returns a taskId to track progress with get_checkout or get_status_history. " +
+      "For agentic payments, first call create_payment_session and have the customer " +
+      "authorize their card via the returned url, then pass the resulting sessionId as " +
+      "customer.payment.data.sessionId (no provider needed in this case).",
     inputSchema: {
       type: "object",
       required: ["customer", "tasks"],
@@ -143,21 +148,26 @@ const TOOLS = [
 
             payment: {
               type: "object",
-              description: "Payment configuration",
+              description:
+                "Payment configuration. Two flavours: (1) agentic — omit provider and set " +
+                "data.sessionId to the sessionId returned by create_payment_session, once the " +
+                "customer has authorized their card via the hosted session url; " +
+                "(2) direct card (testing) — set provider to 'test' and pass raw card details in data.",
               properties: {
                 provider: {
                   type: "string",
-                  description: "Payment provider — use 'test' for testing"
+                  description: "Payment provider — omit when using data.sessionId; use 'test' for direct card testing"
                 },
                 data: {
                   type: "object",
-                  description: "Card details",
+                  description: "Either { sessionId } for agentic payments, or raw card details for provider 'test'",
                   properties: {
-                    cardNumber:   { type: "string", description: "Card number e.g. '4242424242424242'" },
-                    cvv:          { type: "string", description: "Card CVV" },
-                    name:         { type: "string", description: "Cardholder name" },
-                    expiryMonth:  { type: "string", description: "Expiry month e.g. '12'" },
-                    expiryYear:   { type: "string", description: "Expiry year e.g. '2034'" }
+                    sessionId:    { type: "string", description: "sessionId from create_payment_session, after the customer has authorized their card" },
+                    cardNumber:   { type: "string", description: "Card number e.g. '4242424242424242' — used when provider is 'test'" },
+                    cvv:          { type: "string", description: "Card CVV — used when provider is 'test'" },
+                    name:         { type: "string", description: "Cardholder name — used when provider is 'test'" },
+                    expiryMonth:  { type: "string", description: "Expiry month e.g. '12' — used when provider is 'test'" },
+                    expiryYear:   { type: "string", description: "Expiry year e.g. '2034' — used when provider is 'test'" }
                   }
                 }
               }
@@ -397,6 +407,48 @@ const TOOLS = [
         }
       }
     }
+  },
+
+  // 8. CREATE PAYMENT SESSION
+  // POST https://api.cartai.ai/payment/session
+  {
+    name: "create_payment_session",
+    description:
+      "Creates a hosted payment session and returns a secure URL for the customer to " +
+      "authorize their card. The session automatically initiates Visa Intelligent Commerce " +
+      "or Mastercard Agent Pay based on the customer's card on file — no additional " +
+      "integration required. REQUIRED FOLLOW-UP — every single time, with no exceptions: " +
+      "immediately return the url received in the response " +
+      "and present it, so the customer gets a clickable 'Open' button. Do this automatically " +
+      "without asking the user first, and do not just print or return the raw url as text.",
+    inputSchema: {
+      type: "object",
+      required: ["email"],
+      properties: {
+        email: {
+          type: "string",
+          format: "email",
+          description: "Customer's email address — used to identify the customer and look up their card"
+        },
+        price: {
+          type: "string",
+          description: "Payment amount in USD, as a string with no currency symbol. Default: '500'"
+        },
+        currency: {
+          type: "string",
+          description: "Currency code. Default: 'USD'"
+        },
+        purpose: {
+          type: "string",
+          description: "Short description of what the payment is for, shown to the customer during the payment flow. Default: 'CartAI Purchase Agent'"
+        },
+        expiry: {
+          type: "string",
+          format: "date-time",
+          description: "ISO 8601 timestamp after which the session URL is no longer valid. Default: 1 week from creation"
+        }
+      }
+    }
   }
 
 ];
@@ -622,6 +674,47 @@ async function handleGetCheckoutEstimates(args) {
   };
 }
 
+async function handleCreatePaymentSession(args) {
+  const { email, price, currency, purpose, expiry } = args;
+
+  const payload = { email };
+  if (price !== undefined) payload.price = price;
+  if (currency !== undefined) payload.currency = currency;
+  if (purpose !== undefined) payload.purpose = purpose;
+  if (expiry !== undefined) payload.expiry = expiry;
+
+  const url = `${BASE_URL}/payment/session`;
+  const result = await cartaiRequest("POST", url, payload);
+
+  if (!result.ok) {
+    return errorResult(
+      `create_payment_session failed — HTTP ${result.status}`,
+      result.data
+    );
+  }
+
+  const data = result.data.data ?? {};
+  return {
+    content: [{
+      type: "text",
+      text: [
+        `✅ Payment session created`,
+        ``,
+        `sessionId: ${data.sessionId}`,
+        `expiry:    ${data.authorization?.expiry ?? "—"}`,
+        ``,
+        `[Open payment session](${data.url})`,
+        ``,
+        `Present the link above as-is so the customer can click it to authorize their card.`,
+        `Once authorized, pass this sessionId into create_checkout as customer.payment.data.sessionId (no provider needed).`,
+        ``,
+        `Full response:`,
+        JSON.stringify(result.data, null, 2)
+      ].join("\n")
+    }]
+  };
+}
+
 // ─── Util ─────────────────────────────────────────────────────────────────────
 
 function errorResult(message, data) {
@@ -637,13 +730,14 @@ function errorResult(message, data) {
 // ─── Dispatch ────────────────────────────────────────────────────────────────
 
 const HANDLERS = {
-  create_checkout:        handleCreateCheckout,
-  get_checkout:           handleGetCheckout,
-  cancel_checkout:        handleCancelCheckout,
-  get_status_history:     handleGetStatusHistory,
-  search_products:        handleSearchProducts,
-  get_product_details:    handleGetProductDetails,
-  get_checkout_estimates: handleGetCheckoutEstimates,
+  create_checkout:         handleCreateCheckout,
+  get_checkout:            handleGetCheckout,
+  cancel_checkout:         handleCancelCheckout,
+  get_status_history:      handleGetStatusHistory,
+  search_products:         handleSearchProducts,
+  get_product_details:     handleGetProductDetails,
+  get_checkout_estimates:  handleGetCheckoutEstimates,
+  create_payment_session:  handleCreatePaymentSession,
 };
 
 // ─── Server ──────────────────────────────────────────────────────────────────

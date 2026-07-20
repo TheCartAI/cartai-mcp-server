@@ -53,6 +53,7 @@ An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noref
 | `search_products` | Search for products by name across merchants |
 | `get_product_details` | Retrieve detailed info, variants, and pricing for a product URL |
 | `get_checkout_estimates` | Compute pre-checkout shipping and tax estimates before placing an order |
+| `create_payment_session` | Create a hosted payment session URL |
 
 Under the hood every tool maps 1-to-1 to a CartAI REST endpoint — the MCP server is a thin, type-safe bridge with no additional logic.
 
@@ -172,7 +173,7 @@ Creates a new async checkout task. CartAI runs the checkout in the background an
 | `customer.shippingAddress.province` | `string` | State/province code e.g. `NY` |
 | `customer.shippingAddress.postalCode` | `string` | ZIP or postal code |
 | `customer.shippingAddress.country` | `string` | Country code e.g. `US` |
-| `customer.payment.provider` | `string` | Payment provider identifier |
+| `customer.payment.data` | `object` | `{ sessionId }` for agentic payments, or raw card details when `provider` is `"test"` |
 | `tasks[].url` | `string` | Full product page URL |
 | `tasks[].quantity` | `integer` | Units to purchase (min 1) |
 
@@ -183,7 +184,8 @@ Creates a new async checkout task. CartAI runs the checkout in the background an
 | `customer.customerId` | `UUID` | `null` | Existing CartAI customer ID |
 | `customer.billingAddress` | object | `null` | Same shape as `shippingAddress`; defaults to shipping address if omitted |
 | `customer.shippingMethod.strategy` | `string` | `"cheapest"` | `"cheapest"` \| `"fastest"` \| `"standard"` |
-| `customer.payment.data.userId` | `string` | `null` | User ID for provider-linked payment |
+| `customer.payment.data.sessionId` | `string` | `null` | sessionId from `create_payment_session`, after the customer has authorized their card. No `provider` needed with this. |
+| `customer.payment.provider` | `string` | `null` | Set to `"test"` to pass raw card details in `data` instead of a `sessionId` |
 | `tasks[].selectedVariant.color` | `string` | `null` | — |
 | `tasks[].selectedVariant.size` | `string` | `null` | — |
 | `tasks[].metadata.title` | `string` | `null` | Display only — not used for checkout logic |
@@ -305,6 +307,27 @@ Computes a pre-checkout cost estimate for a given merchant, destination, and lis
 
 ---
 
+### `create_payment_session`
+
+Creates a hosted payment session and returns a secure URL for the customer to authorize their card. The session automatically starts Visa Intelligent Commerce or Mastercard Agent Pay based on the card on file for the customer's email — no additional integration required.
+
+> The tool result includes the session `url` as a clickable markdown link — present it as-is (a clickable "Open" button) rather than rewriting or reformatting it, so the customer can click through to authorize their card.
+
+**Required:** `email`
+
+**Optional inputs:**
+
+| Field | Type | Default | Description |
+|-------|------|---------|-------------|
+| `price` | `string` | `"500"` | Payment amount in USD, no currency symbol |
+| `currency` | `string` | `"USD"` | Currency code |
+| `purpose` | `string` | `"CartAI Purchase Agent"` | Shown to the customer during the payment flow |
+| `expiry` | `string` (ISO 8601) | 1 week from creation | When the session URL stops being valid |
+
+**Returns:** `sessionId`, a hosted `url` (formatted as a clickable link for the customer), and the session's `authorization` details (price, currency, purpose, expiry).
+
+---
+
 ## Example prompts
 
 Once the server is connected, try these in Claude:
@@ -327,11 +350,15 @@ Cancel checkout task abc-123-def with execution ID xyz-789.
 Show me the full status history for task abc-123-def including how many credits were used.
 ```
 
+```
+Create a payment session for customer@example.com to pay $700 for "Carol's Purchase Agent".
+```
+
 ---
 
 ## How it works
 
-CartAI exposes two sets of capabilities: **Catalog** (discover and evaluate products) and **Checkout** (autonomously place orders).
+CartAI exposes three sets of capabilities: **Catalog** (discover and evaluate products), **Payments** (get the customer's card authorized for agentic use), and **Checkout** (autonomously place orders).
 
 ### Catalog flow
 
@@ -341,9 +368,29 @@ Use the catalog tools to find products and validate details before committing to
 2. **`get_product_details`** — pass a `directUrl` to retrieve all variants, stock availability, and per-variant pricing.
 3. **`get_checkout_estimates`** — compute shipping and tax for a destination before placing the order.
 
+### Payment flow
+
+Before `create_checkout` can charge a customer's real card, the customer has to authorize it once through a hosted payment session:
+
+```
+Your App                  CartAI                    Customer
+    |                          |                          |
+    |— POST /payment/session ——>|                         |
+    |<— { sessionId, url } ————|                          |
+    |                          |                          |
+    |———————————— share the url with the customer ———————>|
+    |                          |<——————— opens url ———————|
+    |                          |   Adds card, authorizes  |
+    |                          |<— Authorization complete —|
+```
+
+1. **`create_payment_session`** — pass the customer's `email` (plus optional `price`, `currency`, `purpose`, `expiry`). Returns a `sessionId` and a hosted `url`.
+2. **Click through the `url` link** — the customer adds their card and authorizes CartAI to transact on it via Visa Intelligent Commerce or Mastercard Agent Pay.
+3. **Hold onto the `sessionId`** — once the customer has authorized, pass it into `create_checkout` as `customer.payment.data.sessionId` (no `provider` needed for this flavour).
+
 ### Checkout flow
 
-Once you have a product URL and customer details, hand off to CartAI:
+Once you have a product URL, customer details, and either an authorized `sessionId` or test card details, hand off to CartAI:
 
 ```
 Your App                  CartAI Agent              Merchant Website
@@ -358,7 +405,9 @@ Your App                  CartAI Agent              Merchant Website
     |<— Webhook: COMPLETED ————|                          |
 ```
 
-1. **`create_checkout`** — pass the product URL, customer shipping address, and payment credentials.
+1. **`create_checkout`** — pass the product URL, customer shipping address, and payment credentials. Two payment flavours are supported:
+   - **Agentic (recommended):** `{ "data": { "sessionId": "<sessionId from create_payment_session>" } }`
+   - **Direct card (testing):** `{ "provider": "test", "data": { "cardNumber": "...", "cvv": "...", "name": "...", "expiryMonth": "...", "expiryYear": "..." } }`
 2. **Receive a `taskId` immediately** — the checkout runs asynchronously in the background.
 3. **The AI agent does the work** — navigating the merchant's live website, selecting the right variant, applying your shipping strategy, and placing the order.
 4. **Track progress** — use `get_checkout` or `get_status_history` to monitor the task; cancel anytime with `cancel_checkout`.
