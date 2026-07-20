@@ -5,10 +5,11 @@
 # CartAI MCP Server
 
 > **<a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI</a> Powered MCP Server for autonomous product discovery, agentic payments, and checkout.**
->
 > **<a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">Sign up and try it on the CartAI Portal →</a>**
 
 An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP (Model Context Protocol)</a> server that exposes the CartAI Catalog, Payments, and Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Powered entirely by CartAI — search for products, fetch detailed variant and pricing info, get pre-checkout shipping and tax estimates, get a customer's card authorized for agentic payments, and execute the entire checkout autonomously, asynchronously, with full status tracking.
+
+<br/>
 
 <a href="https://nodejs.org" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen" alt="Node.js ≥ 18"/></a>
 <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer"><img src="https://img.shields.io/badge/MCP-compatible-blue" alt="MCP Compatible"/></a>
