@@ -1,0 +1,31 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.TheCartAI/cartai-mcp-server",
+  "title": "CartAI MCP Server",
+  "description": "Search products, store credentials, run payments, and place async checkouts via CartAI.",
+  "repository": {
+    "url": "https://github.com/TheCartAI/cartai-mcp-server",
+    "source": "github"
+  },
+  "version": "1.0.0",
+  "websiteUrl": "https://www.cartai.ai/",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "cartai-mcp-server",
+      "version": "1.0.0",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "CARTAI_API_KEY",
+          "description": "CartAI API key from the CartAI portal",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        }
+      ]
+    }
+  ]
+}
