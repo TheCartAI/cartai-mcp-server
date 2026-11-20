@@ -25,6 +25,7 @@ An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noref
 - [Installation](#installation)
 - [Configuration](#configuration)
   - [Claude Desktop](#claude-desktop)
+  - [Cursor](#cursor)
   - [VS Code](#vs-code)
   - [MCP Inspector](#mcp-inspector)
 - [Tools](#tools)
@@ -74,17 +75,23 @@ Under the hood every tool maps 1-to-1 to a CartAI REST endpoint — the MCP serv
 | Requirement | Version / Notes |
 |-------------|-----------------|
 | **Node.js** | `>= 18.0.0` (uses native `fetch` and ES modules) |
-| **CartAI API key** | Obtain from the <a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI Admin Portal</a> — see <a href="https://docs.cartai.ai/" target="_blank" rel="noopener noreferrer">API Docs</a> for full reference |
-| **MCP host** | Claude Desktop, VS Code (with MCP extension), or MCP Inspector |
+| **CartAI API key** | Obtain from the <a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">CartAI Admin Portal</a> — see <a href="https://docs.cartai.ai/" target="_blank" rel="noopener noreferrer">API Docs</a> for full reference |
+| **MCP host** | Claude Desktop, Cursor, VS Code (with MCP extension), or MCP Inspector |
 
 ---
 
 ## Installation
 
+### Run with npx (recommended)
+
+You do not need to clone the repo. Point your MCP client at `npx -y cartai-mcp-server` and set `CARTAI_API_KEY`. See [Configuration](#configuration).
+
+### Local development
+
 ```bash
 # 1. Clone the repo
-git clone https://github.com/your-username/cartai-mcp.git
-cd cartai-mcp
+git clone https://github.com/TheCartAI/cartai-mcp-server.git
+cd cartai-mcp-server
 
 # 2. Install dependencies
 npm install
@@ -103,6 +110,8 @@ npm start
 
 ## Configuration
 
+The snippets below use `npx`. To run a local clone instead, set `"command"` to `node` and `"args"` to `["/absolute/path/to/cartai-mcp-server/src/index.js"]`.
+
 ### Claude Desktop
 
 Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or `%APPDATA%\Claude\claude_desktop_config.json` (Windows):
@@ -111,8 +120,8 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 {
   "mcpServers": {
     "cartai": {
-      "command": "node",
-      "args": ["/absolute/path/to/cartai-mcp/src/index.js"],
+      "command": "npx",
+      "args": ["-y", "cartai-mcp-server"],
       "env": {
         "CARTAI_API_KEY": "your_api_key_here"
       }
@@ -121,7 +130,27 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
 }
 ```
 
-Restart Claude Desktop — you should see the CartAI tools in the tool picker.
+Restart Claude Desktop. You should see the CartAI tools in the tool picker.
+
+---
+
+### Cursor
+
+Add the following to `~/.cursor/mcp.json`, or to `.cursor/mcp.json` in a project:
+
+```json
+{
+  "mcpServers": {
+    "cartai": {
+      "command": "npx",
+      "args": ["-y", "cartai-mcp-server"],
+      "env": {
+        "CARTAI_API_KEY": "your_api_key_here"
+      }
+    }
+  }
+}
+```
 
 ---
 
@@ -134,8 +163,8 @@ Install the **MCP extension** for VS Code, then add the following to your `.vsco
   "servers": {
     "cartai": {
       "type": "stdio",
-      "command": "node",
-      "args": ["/absolute/path/to/cartai-mcp/src/index.js"],
+      "command": "npx",
+      "args": ["-y", "cartai-mcp-server"],
       "env": {
         "CARTAI_API_KEY": "your_api_key_here"
       }
@@ -144,7 +173,7 @@ Install the **MCP extension** for VS Code, then add the following to your `.vsco
 }
 ```
 
-Reload the VS Code window — the CartAI tools will be available to any MCP-aware agent running in the editor.
+Reload the VS Code window. The CartAI tools will be available to any MCP-aware agent running in the editor.
 
 ---
 
@@ -154,7 +183,7 @@ Reload the VS Code window — the CartAI tools will be available to any MCP-awar
 
 ```bash
 # Run Inspector against this server in one command
-npx @modelcontextprotocol/inspector node /absolute/path/to/cartai-mcp/src/index.js
+npx @modelcontextprotocol/inspector npx -y cartai-mcp-server
 ```
 
 Set the API key in the **Environment Variables** panel inside Inspector (`CARTAI_API_KEY = your_api_key_here`), then use the **Tools** tab to call `create_checkout`, `get_checkout`, etc. interactively.

@@ -3,9 +3,36 @@
   "version": "1.0.0",
   "description": "MCP Server for CartAI Checkout APIs",
   "type": "module",
+  "mcpName": "io.github.TheCartAI/cartai-mcp-server",
+  "license": "Apache-2.0",
+  "author": "CartAI",
+  "homepage": "https://www.cartai.ai/",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/TheCartAI/cartai-mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/TheCartAI/cartai-mcp-server/issues"
+  },
+  "keywords": [
+    "mcp",
+    "modelcontextprotocol",
+    "cartai",
+    "checkout",
+    "payments",
+    "catalog",
+    "ai-agent"
+  ],
   "bin": {
     "cartai-mcp": "./src/index.js"
   },
+  "files": [
+    "src",
+    "images",
+    "LICENSE",
+    "README.md",
+    "server.json"
+  ],
   "scripts": {
     "start": "node src/index.js",
     "dev": "node --watch src/index.js"
