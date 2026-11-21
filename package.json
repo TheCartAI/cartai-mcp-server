@@ -1,7 +1,7 @@
 {
   "name": "cartai-mcp-server",
-  "version": "1.0.1",
-  "description": "MCP Server for CartAI Checkout APIs",
+  "version": "1.0.2",
+  "description": "CartAI MCP server: Agentic checkout with or without a human in the loop, product catalog, and an agent wallet.",
   "type": "module",
   "mcpName": "ai.cartai/cartai-mcp-server",
   "license": "Apache-2.0",
