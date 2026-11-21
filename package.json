@@ -1,9 +1,9 @@
 {
   "name": "cartai-mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "MCP Server for CartAI Checkout APIs",
   "type": "module",
-  "mcpName": "io.github.TheCartAI/cartai-mcp-server",
+  "mcpName": "ai.cartai/cartai-mcp-server",
   "license": "Apache-2.0",
   "author": "CartAI",
   "homepage": "https://www.cartai.ai/",
