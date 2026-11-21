@@ -7,7 +7,7 @@
 > **<a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI</a> Powered MCP Server for autonomous product discovery, agentic payments, and checkout.**
 > **<a href="https://portal.cartai.ai/" target="_blank" rel="noopener noreferrer">Sign up and try it on the CartAI Portal →</a>**
 
-An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noreferrer">MCP (Model Context Protocol)</a> server that exposes the CartAI Catalog, Payments, Credentials, and Checkout APIs as tools inside Claude Desktop, Claude Code, Cursor, or any MCP-compatible AI host. Powered entirely by CartAI — search for products, fetch detailed variant and pricing info, get pre-checkout shipping and tax estimates, get a customer's card authorized for agentic payments, securely store merchant logins, and execute the entire checkout autonomously — from product URLs or just product names — asynchronously, with full status tracking and interactive MFA support.
+CartAI is agentic checkout infrastructure for platforms. One API places orders on merchant sites with no human in the loop. When a checkout needs something it does not have, such as a verification code, an address or a payment detail, it pauses, asks the customer and finishes the order. The merchant stays the merchant of record.
 
 <br/>
 
