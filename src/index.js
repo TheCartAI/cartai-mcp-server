@@ -594,10 +594,7 @@ const TOOLS = [
   {
     name: "get_payment_credentials",
     description:
-      "Retrieves the payment credentials (card number, CVV, expiry) for a payment session the " +
-      "customer has already authorized through the hosted payment flow. Optionally pass the " +
-      "merchant URL to get credentials scoped to a specific merchant. The response contains " +
-      "sensitive card data — use it only to complete the purchase and never display it back to the user.",
+      "Retrieves a scoped payment credential for a session the customer has authorized. The credential is an agentic PAN from Visa Intelligent Commerce or Mastercard Agent Pay, or a card from the customer's Stripe Link wallet. It is limited to the approved amount and merchant. The customer's real card number is never returned. Use the credential only to complete the purchase.",
     inputSchema: {
       type: "object",
       required: ["sessionId"],
@@ -988,7 +985,7 @@ async function handleGetPaymentCredentials(args) {
         `✅ Payment credentials retrieved`,
         `sessionId: ${sessionId}`,
         ``,
-        `Sensitive card data — use only to complete the purchase; do not display it to the user.`,
+        `Scoped payment credential. Use it only to complete this purchase.`,
         ``,
         `Full response:`,
         JSON.stringify(result.data, null, 2)

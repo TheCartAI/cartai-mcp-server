@@ -63,7 +63,7 @@ An <a href="https://modelcontextprotocol.io" target="_blank" rel="noopener noref
 | `get_checkout_estimates` | Compute pre-checkout shipping and tax estimates before placing an order |
 | `create_payment_session` | Create a hosted payment session URL for the customer to authorize their card |
 | `delete_payment_session` | Invalidate a payment session |
-| `get_payment_credentials` | Retrieve card credentials for an authorized payment session |
+| `get_payment_credentials` | Retrieve a scoped payment credential for an authorized payment session |
 | `create_credential_session` | Create a secure vault URL where the customer stores their merchant login |
 
 Under the hood every tool maps 1-to-1 to a CartAI REST endpoint — the MCP server is a thin, type-safe bridge with no additional logic.
@@ -442,9 +442,7 @@ Deletes an existing payment session. Once deleted, the hosted payment URL stops 
 
 ### `get_payment_credentials`
 
-Retrieves the payment credentials for a payment session the customer has already authorized through the hosted payment flow.
-
-> ⚠️ The response contains full card details (card number, CVV, expiry). Only use it to complete a purchase and never display it back to the user.
+Retrieves a scoped payment credential for a session the customer has authorized. The credential is an agentic PAN from Visa Intelligent Commerce or Mastercard Agent Pay, or a card from the customer's Stripe Link wallet. It is limited to the approved amount and merchant. The customer's real card number is never returned.
 
 **Required inputs:**
 
@@ -541,7 +539,7 @@ Use the catalog tools to find products and validate details before committing to
 
 ### Payment flow
 
-Before a checkout can charge a customer's real card, the customer has to authorize it once through a hosted payment session:
+Before a checkout can charge a customer, the customer has to authorize it once through a hosted payment session:
 
 ```
 Your App                  CartAI                    Customer
@@ -558,7 +556,7 @@ Your App                  CartAI                    Customer
 1. **`create_payment_session`** — pass the customer's `email`, `price`, and `purpose` (plus optional `currency`, `expiry`, `merchantUrl`, `merchantName`). Returns a `sessionId` and a hosted `url`.
 2. **Click through the `url` link** — the customer adds their card and authorizes CartAI to transact on it via Visa Intelligent Commerce or Mastercard Agent Pay.
 3. **Hold onto the `sessionId`** — once the customer has authorized, pass it into `create_checkout` / `create_search_checkout` as `customer.payment.data.sessionId` (no `provider` needed for this flavour).
-4. **Optional:** retrieve the card credentials directly with `get_payment_credentials`, or invalidate the session with `delete_payment_session` when it's no longer needed.
+4. **Optional:** retrieve the scoped payment credential directly with `get_payment_credentials`, or invalidate the session with `delete_payment_session` when it's no longer needed.
 
 ### Saved credentials flow
 
