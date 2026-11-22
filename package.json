@@ -1,6 +1,6 @@
 {
   "name": "cartai-mcp-server",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "CartAI is agentic checkout infrastructure for platforms. One API places orders on merchant sites with no human in the loop. When a checkout needs something it does not have, such as a verification code, an address or a payment detail, it pauses, asks the customer and finishes the order. The merchant stays the merchant of record.",
   "type": "module",
   "mcpName": "ai.cartai/cartai-mcp-server",
@@ -38,8 +38,8 @@
     "dev": "node --watch src/index.js"
   },
   "dependencies": {
-    "@modelcontextprotocol/sdk": "^1.0.0",
-    "zod": "^3.22.0"
+    "@modelcontextprotocol/sdk": "^1.32.2",
+    "zod": "^4.6.7"
   },
   "engines": {
     "node": ">=18.0.0"
