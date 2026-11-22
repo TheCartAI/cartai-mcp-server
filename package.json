@@ -24,7 +24,7 @@
     "ai-agent"
   ],
   "bin": {
-    "cartai-mcp": "./src/index.js"
+    "cartai-mcp": "src/index.js"
   },
   "files": [
     "src",
