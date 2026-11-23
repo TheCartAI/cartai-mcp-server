@@ -4,6 +4,8 @@
 
 # CartAI MCP Server
 
+[![TheCartAI/cartai-mcp-server MCP server](https://glama.ai/mcp/servers/TheCartAI/cartai-mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/TheCartAI/cartai-mcp-server)
+
 CartAI is agentic checkout infrastructure for platforms. One API places orders on merchant sites with no human in the loop. When a checkout needs something it does not have, such as a verification code, an address or a payment detail, it pauses, asks the customer and finishes the order. The merchant stays the merchant of record.
 
 > **<a href="https://cartai.ai" target="_blank" rel="noopener noreferrer">CartAI</a> Powered MCP Server for autonomous product discovery, agentic payments, and checkout.**
